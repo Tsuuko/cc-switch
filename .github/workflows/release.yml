@@ -20,12 +20,12 @@ jobs:
       matrix:
         include:
           - os: windows-2022
-          - os: windows-11-arm
-            arch: arm64
-          - os: ubuntu-22.04
-          - os: ubuntu-22.04-arm
-            arch: arm64
-          - os: macos-14
+          # - os: windows-11-arm
+          #   arch: arm64
+          # - os: ubuntu-22.04
+          # - os: ubuntu-22.04-arm
+          #   arch: arm64
+          # - os: macos-14
 
     steps:
       - name: Checkout
@@ -129,9 +129,15 @@ jobs:
       - name: Install frontend deps
         run: pnpm install --frozen-lockfile
 
-      - name: Prepare Tauri signing key
+      # Updater signing is disabled for personal Windows-only releases.
+      # - name: Prepare Tauri signing key
+      #   shell: bash
+      #   run: |
+      - name: Skip Tauri signing key
         shell: bash
         run: |
+          echo "Tauri updater signing is disabled for this release."
+          : <<'SKIP_TAURI_SIGNING'
           # 调试：检查 Secret 是否存在
           if [ -z "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
             echo "❌ TAURI_SIGNING_PRIVATE_KEY Secret 为空或不存在" >&2
@@ -184,6 +190,7 @@ jobs:
             echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
           fi
           echo "✅ Tauri signing key prepared"
+          SKIP_TAURI_SIGNING
 
       - name: Import Apple signing certificate
         if: runner.os == 'macOS'
@@ -448,30 +455,16 @@ jobs:
           $targetRoot = if ($isArm64) { 'src-tauri/target/aarch64-pc-windows-msvc/release' } else { 'src-tauri/target/release' }
           $assetSuffix = if ($isArm64) { '-arm64' } else { '' }
 
-          # 仅打包 MSI 安装器 + .sig（用于 Updater）
-          $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle/msi') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($null -eq $msi) {
-            # 兜底：全局搜索 .msi
-            $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
-          }
-          if ($null -ne $msi) {
-            $dest = "CC-Switch-$VERSION-Windows$assetSuffix.msi"
-            Copy-Item $msi.FullName (Join-Path release-assets $dest)
-            Write-Host "Installer copied: $dest"
-            $sigPath = "$($msi.FullName).sig"
-            if (Test-Path $sigPath) {
-              Copy-Item $sigPath (Join-Path release-assets ("$dest.sig"))
-              Write-Host "Signature copied: $dest.sig"
-            } elseif ($isArm64) {
-              throw "Signature not found for $($msi.Name)"
-            } else {
-              Write-Warning "Signature not found for $($msi.Name)"
-            }
-          } elseif ($isArm64) {
-            throw 'No Windows ARM64 MSI installer found'
-          } else {
-            Write-Warning 'No Windows MSI installer found'
-          }
+          # MSI + updater .sig packaging is disabled for personal zip/exe releases.
+          # $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle/msi') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          # if ($null -eq $msi) {
+          #   $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          # }
+          # if ($null -ne $msi) {
+          #   $dest = "CC-Switch-$VERSION-Windows$assetSuffix.msi"
+          #   Copy-Item $msi.FullName (Join-Path release-assets $dest)
+          #   Write-Host "Installer copied: $dest"
+          # }
 
           # 绿色版（portable）：仅可执行文件打 zip（不参与 Updater）
           $exeCandidates = if ($isArm64) {
@@ -484,6 +477,10 @@ jobs:
           }
           $exePath = $exeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if ($null -ne $exePath) {
+            $exeDest = "CC-Switch-$VERSION-Windows$assetSuffix.exe"
+            Copy-Item $exePath (Join-Path release-assets $exeDest)
+            Write-Host "Windows exe copied: $exeDest"
+
             $portableDir = 'release-assets/CC-Switch-Portable'
             New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
             Copy-Item $exePath $portableDir
@@ -618,21 +615,14 @@ jobs:
 
             ### 下载
 
-            - **macOS**: `CC-Switch-${{ github.ref_name }}-macOS.dmg`（推荐）或 `CC-Switch-${{ github.ref_name }}-macOS.zip`（解压即用）
-            - **Windows (x86_64)**: `CC-Switch-${{ github.ref_name }}-Windows.msi`（安装版）或 `CC-Switch-${{ github.ref_name }}-Windows-Portable.zip`（绿色版）
-            - **Windows (ARM64)**: `CC-Switch-${{ github.ref_name }}-Windows-arm64.msi`（安装版）或 `CC-Switch-${{ github.ref_name }}-Windows-arm64-Portable.zip`（绿色版）
-            - **Linux (x86_64)**: `CC-Switch-${{ github.ref_name }}-Linux-x86_64.AppImage` / `.deb` / `.rpm`
-            - **Linux (ARM64)**: `CC-Switch-${{ github.ref_name }}-Linux-arm64.AppImage` / `.deb` / `.rpm`
-
-            > `.tar.gz` 为 Tauri updater 自动更新专用，无需手动下载。
-
-            ---
-            macOS 版本已通过 Apple 代码签名和公证，可直接安装使用。
+            - **Windows (x86_64)**: `CC-Switch-${{ github.ref_name }}-Windows.exe` or `CC-Switch-${{ github.ref_name }}-Windows-Portable.zip`
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # latest.json is only needed for Tauri in-app updates.
   assemble-latest-json:
+    if: ${{ false }}
     name: Assemble latest.json
     runs-on: ubuntu-22.04
     needs: publish-release
