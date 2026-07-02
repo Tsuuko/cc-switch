@@ -224,6 +224,8 @@ export interface ProviderMeta {
   codexChatReasoning?: CodexChatReasoning;
   // Custom User-Agent for local proxy routing. Only applied by the local proxy.
   customUserAgent?: string;
+  // Codex installation_id file value. Written to {.codex}/installation_id on switch.
+  installationId?: string;
   // Local proxy request overrides. Only applied by the local proxy after route transforms.
   localProxyRequestOverrides?: LocalProxyRequestOverrides;
   // 供应商类型（用于识别 Copilot 等特殊供应商）

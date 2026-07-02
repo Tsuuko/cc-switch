@@ -153,8 +153,39 @@ pub fn get_codex_config_path() -> PathBuf {
     get_codex_config_dir().join("config.toml")
 }
 
+pub fn get_codex_installation_id_path() -> PathBuf {
+    get_codex_config_dir().join("installation_id")
+}
+
 pub fn get_codex_model_catalog_path() -> PathBuf {
     get_codex_config_dir().join(CC_SWITCH_CODEX_MODEL_CATALOG_FILENAME)
+}
+
+pub fn write_codex_installation_id_atomic(installation_id: &str) -> Result<(), AppError> {
+    let value = installation_id.trim();
+    if value.is_empty() {
+        return Ok(());
+    }
+
+    let path = get_codex_installation_id_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| AppError::io(parent, e))?;
+    }
+    write_text_file(&path, value)
+}
+
+pub fn write_codex_installation_id_for_provider(
+    provider: &crate::provider::Provider,
+) -> Result<(), AppError> {
+    let Some(installation_id) = provider
+        .meta
+        .as_ref()
+        .and_then(|meta| meta.installation_id.as_deref())
+    else {
+        return Ok(());
+    };
+
+    write_codex_installation_id_atomic(installation_id)
 }
 
 /// 获取 Codex 供应商配置文件路径

@@ -481,6 +481,9 @@ pub struct ProviderMeta {
     /// Custom User-Agent for local proxy routing.
     #[serde(rename = "customUserAgent", skip_serializing_if = "Option::is_none")]
     pub custom_user_agent: Option<String>,
+    /// Codex installation_id file value. Written to `{codex_dir}/installation_id` on switch.
+    #[serde(rename = "installationId", skip_serializing_if = "Option::is_none")]
+    pub installation_id: Option<String>,
     /// Local proxy request overrides applied to the transformed upstream request.
     #[serde(
         rename = "localProxyRequestOverrides",

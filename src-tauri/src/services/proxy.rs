@@ -2157,6 +2157,8 @@ impl ProxyService {
                 profile,
             )
             .map_err(|e| format!("写入 Codex 配置失败: {e}"))?;
+            crate::codex_config::write_codex_installation_id_for_provider(&provider)
+                .map_err(|e| format!("写入 Codex installation_id 失败: {e}"))?;
         }
 
         if let Some(server) = self.server.read().await.as_ref() {
@@ -2425,7 +2427,10 @@ impl ProxyService {
             config_str,
             profile,
         )
-        .map_err(|e| format!("写入 Codex 配置失败: {e}"))
+        .map_err(|e| format!("写入 Codex 配置失败: {e}"))?;
+        crate::codex_config::write_codex_installation_id_for_provider(provider)
+            .map_err(|e| format!("写入 Codex installation_id 失败: {e}"))?;
+        Ok(())
     }
 
     fn codex_auth_has_proxy_placeholder(auth: &Value) -> bool {

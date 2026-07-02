@@ -119,6 +119,7 @@ import { HERMES_DEFAULT_CONFIG } from "./hooks/useHermesFormState";
 import { resolveManagedAccountId } from "@/lib/authBinding";
 import { useOpenClawLiveProviderIds } from "@/hooks/useOpenClaw";
 import { useHermesLiveProviderIds } from "@/hooks/useHermes";
+import { generateUUID } from "@/utils/uuid";
 
 type PresetEntry = {
   id: string;
@@ -380,6 +381,7 @@ function ProviderFormFull({
     });
     setCodexChatReasoning(initialData?.meta?.codexChatReasoning ?? {});
     setCustomUserAgent(initialData?.meta?.customUserAgent ?? "");
+    setInstallationId(initialData?.meta?.installationId ?? generateUUID());
     setLocalProxyHeadersOverride(
       formatRequestOverrideObject(
         initialData?.meta?.localProxyRequestOverrides?.headers,
@@ -552,6 +554,9 @@ function ProviderFormFull({
     );
   const [customUserAgent, setCustomUserAgent] = useState<string>(
     () => initialData?.meta?.customUserAgent ?? "",
+  );
+  const [installationId, setInstallationId] = useState<string>(
+    () => initialData?.meta?.installationId ?? generateUUID(),
   );
   const [localProxyHeadersOverride, setLocalProxyHeadersOverride] =
     useState<string>(() =>
@@ -1479,6 +1484,8 @@ function ProviderFormFull({
         (appId === "claude" || appId === "codex") && category !== "official"
           ? customUserAgent.trim() || undefined
           : undefined,
+      installationId:
+        appId === "codex" ? installationId.trim() || undefined : undefined,
       localProxyRequestOverrides: shouldApplyLocalProxyRequestOverrides
         ? overridesResult.overrides
         : undefined,
@@ -2147,6 +2154,8 @@ function ProviderFormFull({
               speedTestEndpoints={speedTestEndpoints}
               customUserAgent={customUserAgent}
               onCustomUserAgentChange={setCustomUserAgent}
+              installationId={installationId}
+              onInstallationIdChange={setInstallationId}
               localProxyHeadersOverride={localProxyHeadersOverride}
               onLocalProxyHeadersOverrideChange={setLocalProxyHeadersOverride}
               localProxyBodyOverride={localProxyBodyOverride}

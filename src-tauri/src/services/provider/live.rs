@@ -525,7 +525,13 @@ pub(crate) fn write_live_with_common_config(
         return Ok(());
     }
 
-    write_live_snapshot(app_type, &effective_provider)
+    write_live_snapshot(app_type, &effective_provider)?;
+
+    if matches!(app_type, AppType::Codex) {
+        crate::codex_config::write_codex_installation_id_for_provider(&effective_provider)?;
+    }
+
+    Ok(())
 }
 
 pub(crate) fn strip_common_config_from_live_settings(
