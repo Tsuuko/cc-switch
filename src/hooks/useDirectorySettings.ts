@@ -5,10 +5,11 @@ import { homeDir, join } from "@tauri-apps/api/path";
 import { settingsApi, type AppId } from "@/lib/api";
 import type { SettingsFormState } from "./useSettingsForm";
 
-export type DirectoryAppId = Exclude<AppId, "claude-desktop">;
+export type DirectoryAppId = Exclude<AppId, "claude-desktop"> | "codexWsl";
 type AppDirectoryKey =
   | "claude"
   | "codex"
+  | "codexWsl"
   | "gemini"
   | "opencode"
   | "openclaw"
@@ -19,6 +20,7 @@ export interface ResolvedDirectories {
   appConfig: string;
   claude: string;
   codex: string;
+  codexWsl: string;
   gemini: string;
   opencode: string;
   openclaw: string;
@@ -32,6 +34,7 @@ const APP_DIRECTORY_META: Record<
 > = {
   claude: { key: "claude", defaultFolder: ".claude" },
   codex: { key: "codex", defaultFolder: ".codex" },
+  codexWsl: { key: "codexWsl", defaultFolder: "" },
   gemini: { key: "gemini", defaultFolder: ".gemini" },
   opencode: { key: "opencode", defaultFolder: ".config/opencode" },
   openclaw: { key: "openclaw", defaultFolder: ".openclaw" },
@@ -44,6 +47,7 @@ const DIRECTORY_KEY_TO_SETTINGS_FIELD: Record<
 > = {
   claude: "claudeConfigDir",
   codex: "codexConfigDir",
+  codexWsl: "codexWslConfigDir",
   gemini: "geminiConfigDir",
   opencode: "opencodeConfigDir",
   openclaw: "openclawConfigDir",
@@ -72,6 +76,7 @@ const computeDefaultAppConfigDir = async (): Promise<string | undefined> => {
 const computeDefaultConfigDir = async (
   app: DirectoryAppId,
 ): Promise<string | undefined> => {
+  if (app === "codexWsl") return undefined;
   try {
     const home = await homeDir();
     return await join(home, APP_DIRECTORY_META[app].defaultFolder);
@@ -129,6 +134,7 @@ export function useDirectorySettings({
     appConfig: "",
     claude: "",
     codex: "",
+    codexWsl: "",
     gemini: "",
     opencode: "",
     openclaw: "",
@@ -140,6 +146,7 @@ export function useDirectorySettings({
     appConfig: "",
     claude: "",
     codex: "",
+    codexWsl: "",
     gemini: "",
     opencode: "",
     openclaw: "",
@@ -158,6 +165,7 @@ export function useDirectorySettings({
           overrideRaw,
           claudeDir,
           codexDir,
+          codexWslDir,
           geminiDir,
           opencodeDir,
           openclawDir,
@@ -173,6 +181,7 @@ export function useDirectorySettings({
           settingsApi.getAppConfigDirOverride(),
           settingsApi.getConfigDir("claude"),
           settingsApi.getConfigDir("codex"),
+          Promise.resolve(sanitizeDir(settings?.codexWslConfigDir) ?? ""),
           settingsApi.getConfigDir("gemini"),
           settingsApi.getConfigDir("opencode"),
           settingsApi.getConfigDir("openclaw"),
@@ -194,6 +203,7 @@ export function useDirectorySettings({
           appConfig: defaultAppConfig ?? "",
           claude: defaultClaudeDir ?? "",
           codex: defaultCodexDir ?? "",
+          codexWsl: "",
           gemini: defaultGeminiDir ?? "",
           opencode: defaultOpencodeDir ?? "",
           openclaw: defaultOpenclawDir ?? "",
@@ -207,6 +217,7 @@ export function useDirectorySettings({
           appConfig: normalizedOverride ?? defaultsRef.current.appConfig,
           claude: claudeDir || defaultsRef.current.claude,
           codex: codexDir || defaultsRef.current.codex,
+          codexWsl: codexWslDir || defaultsRef.current.codexWsl,
           gemini: geminiDir || defaultsRef.current.gemini,
           opencode: opencodeDir || defaultsRef.current.opencode,
           openclaw: openclawDir || defaultsRef.current.openclaw,
@@ -228,7 +239,7 @@ export function useDirectorySettings({
     return () => {
       active = false;
     };
-  }, []);
+  }, [settings?.codexWslConfigDir]);
 
   const updateDirectoryState = useCallback(
     (key: DirectoryKey, value?: string) => {
@@ -348,6 +359,7 @@ export function useDirectorySettings({
           initialAppConfigDirRef.current ?? defaultsRef.current.appConfig,
         claude: overrides?.claude ?? defaultsRef.current.claude,
         codex: overrides?.codex ?? defaultsRef.current.codex,
+        codexWsl: overrides?.codexWsl ?? defaultsRef.current.codexWsl,
         gemini: overrides?.gemini ?? defaultsRef.current.gemini,
         opencode: overrides?.opencode ?? defaultsRef.current.opencode,
         openclaw: overrides?.openclaw ?? defaultsRef.current.openclaw,

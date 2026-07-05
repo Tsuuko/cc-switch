@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import type { AppId } from "@/lib/api";
 import type { ResolvedDirectories } from "@/hooks/useSettings";
 
-type DirectoryAppId = Exclude<AppId, "claude-desktop">;
+type DirectoryAppId = Exclude<AppId, "claude-desktop"> | "codexWsl";
 
 interface DirectorySettingsProps {
   appConfigDir?: string;
@@ -16,6 +16,7 @@ interface DirectorySettingsProps {
   onResetAppConfig: () => Promise<void>;
   claudeDir?: string;
   codexDir?: string;
+  codexWslDir?: string;
   geminiDir?: string;
   opencodeDir?: string;
   openclawDir?: string;
@@ -33,6 +34,7 @@ export function DirectorySettings({
   onResetAppConfig,
   claudeDir,
   codexDir,
+  codexWslDir,
   geminiDir,
   opencodeDir,
   openclawDir,
@@ -113,6 +115,24 @@ export function DirectorySettings({
           onChange={(val) => onDirectoryChange("codex", val)}
           onBrowse={() => onBrowseDirectory("codex")}
           onReset={() => onResetDirectory("codex")}
+        />
+
+        <DirectoryInput
+          label={t("settings.codexWslConfigDir", {
+            defaultValue: "Codex WSL 設定ディレクトリ",
+          })}
+          description={t("settings.codexWslConfigDirDescription", {
+            defaultValue:
+              "WSL 側の Codex 設定ディレクトリをあらかじめ指定します。",
+          })}
+          value={codexWslDir}
+          resolvedValue={resolvedDirs.codexWsl}
+          placeholder={t("settings.browsePlaceholderCodex", {
+            defaultValue: "Codex 設定ディレクトリを選択",
+          })}
+          onChange={(val) => onDirectoryChange("codexWsl", val)}
+          onBrowse={() => onBrowseDirectory("codexWsl")}
+          onReset={() => onResetDirectory("codexWsl")}
         />
 
         <DirectoryInput

@@ -109,6 +109,7 @@ export function useSettings(): UseSettingsResult {
     resetAllDirectories({
       claude: sanitizeDir(data?.claudeConfigDir),
       codex: sanitizeDir(data?.codexConfigDir),
+      codexWsl: sanitizeDir(data?.codexWslConfigDir),
       gemini: sanitizeDir(data?.geminiConfigDir),
       opencode: sanitizeDir(data?.opencodeConfigDir),
       openclaw: sanitizeDir(data?.openclawConfigDir),
@@ -186,6 +187,9 @@ export function useSettings(): UseSettingsResult {
       try {
         const sanitizedClaudeDir = sanitizeDir(mergedSettings.claudeConfigDir);
         const sanitizedCodexDir = sanitizeDir(mergedSettings.codexConfigDir);
+        const sanitizedCodexWslDir = sanitizeDir(
+          mergedSettings.codexWslConfigDir,
+        );
         const sanitizedGeminiDir = sanitizeDir(mergedSettings.geminiConfigDir);
         const sanitizedOpencodeDir = sanitizeDir(
           mergedSettings.opencodeConfigDir,
@@ -203,6 +207,7 @@ export function useSettings(): UseSettingsResult {
           ...restSettings,
           claudeConfigDir: sanitizedClaudeDir,
           codexConfigDir: sanitizedCodexDir,
+          codexWslConfigDir: sanitizedCodexWslDir,
           geminiConfigDir: sanitizedGeminiDir,
           opencodeConfigDir: sanitizedOpencodeDir,
           openclawConfigDir: sanitizedOpenclawDir,
@@ -317,6 +322,9 @@ export function useSettings(): UseSettingsResult {
         const sanitizedAppDir = sanitizeDir(appConfigDir);
         const sanitizedClaudeDir = sanitizeDir(mergedSettings.claudeConfigDir);
         const sanitizedCodexDir = sanitizeDir(mergedSettings.codexConfigDir);
+        const sanitizedCodexWslDir = sanitizeDir(
+          mergedSettings.codexWslConfigDir,
+        );
         const sanitizedGeminiDir = sanitizeDir(mergedSettings.geminiConfigDir);
         const sanitizedOpencodeDir = sanitizeDir(
           mergedSettings.opencodeConfigDir,
@@ -327,6 +335,7 @@ export function useSettings(): UseSettingsResult {
         const previousAppDir = initialAppConfigDir;
         const previousClaudeDir = sanitizeDir(data?.claudeConfigDir);
         const previousCodexDir = sanitizeDir(data?.codexConfigDir);
+        const previousCodexWslDir = sanitizeDir(data?.codexWslConfigDir);
         const previousGeminiDir = sanitizeDir(data?.geminiConfigDir);
         const previousOpencodeDir = sanitizeDir(data?.opencodeConfigDir);
         const previousOpenclawDir = sanitizeDir(data?.openclawConfigDir);
@@ -340,6 +349,7 @@ export function useSettings(): UseSettingsResult {
           ...restSettings,
           claudeConfigDir: sanitizedClaudeDir,
           codexConfigDir: sanitizedCodexDir,
+          codexWslConfigDir: sanitizedCodexWslDir,
           geminiConfigDir: sanitizedGeminiDir,
           opencodeConfigDir: sanitizedOpencodeDir,
           openclawConfigDir: sanitizedOpenclawDir,
@@ -426,6 +436,8 @@ export function useSettings(): UseSettingsResult {
         // 如果插件同步已经执行过 syncCurrentProvidersLiveSafe，则跳过避免重复
         const claudeDirChanged = sanitizedClaudeDir !== previousClaudeDir;
         const codexDirChanged = sanitizedCodexDir !== previousCodexDir;
+        const codexWslDirChanged =
+          sanitizedCodexWslDir !== previousCodexWslDir;
         const geminiDirChanged = sanitizedGeminiDir !== previousGeminiDir;
         const opencodeDirChanged = sanitizedOpencodeDir !== previousOpencodeDir;
         const openclawDirChanged = sanitizedOpenclawDir !== previousOpenclawDir;
@@ -433,6 +445,7 @@ export function useSettings(): UseSettingsResult {
           !pluginSynced &&
           (claudeDirChanged ||
             codexDirChanged ||
+            codexWslDirChanged ||
             geminiDirChanged ||
             opencodeDirChanged ||
             openclawDirChanged)
