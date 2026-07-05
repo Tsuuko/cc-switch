@@ -36,7 +36,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -60,9 +60,9 @@
       }
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM4MDI4QzlBNTczOTI4RTMKUldUaktEbFhtb3dDeUM5US9kT0FmdGR5Ti9vQzcwa2dTMlpibDVDUmQ2M0VGTzVOWnd0SGpFVlEK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJDQkZCNUZFMjBEMkFCQjcKUldTM3E5SWcvclcvTEVDaTYxenh6bGVTVXpIVktvNmZJeWVyTkUwNm1CUFcyY1ZxWFU1YmhiSFcK",
       "endpoints": [
-        "https://github.com/farion1231/cc-switch/releases/latest/download/latest.json"
+        "https://github.com/Tsuuko/cc-switch/releases/latest/download/latest.json"
       ]
     }
   }

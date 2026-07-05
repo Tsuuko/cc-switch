@@ -129,15 +129,9 @@ jobs:
       - name: Install frontend deps
         run: pnpm install --frozen-lockfile
 
-      # Updater signing is disabled for personal Windows-only releases.
-      # - name: Prepare Tauri signing key
-      #   shell: bash
-      #   run: |
-      - name: Skip Tauri signing key
+      - name: Prepare Tauri signing key
         shell: bash
         run: |
-          echo "Tauri updater signing is disabled for this release."
-          : <<'SKIP_TAURI_SIGNING'
           # 调试：检查 Secret 是否存在
           if [ -z "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
             echo "❌ TAURI_SIGNING_PRIVATE_KEY Secret 为空或不存在" >&2
@@ -190,7 +184,6 @@ jobs:
             echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
           fi
           echo "✅ Tauri signing key prepared"
-          SKIP_TAURI_SIGNING
 
       - name: Import Apple signing certificate
         if: runner.os == 'macOS'
@@ -455,16 +448,27 @@ jobs:
           $targetRoot = if ($isArm64) { 'src-tauri/target/aarch64-pc-windows-msvc/release' } else { 'src-tauri/target/release' }
           $assetSuffix = if ($isArm64) { '-arm64' } else { '' }
 
-          # MSI + updater .sig packaging is disabled for personal zip/exe releases.
-          # $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle/msi') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
-          # if ($null -eq $msi) {
-          #   $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
-          # }
-          # if ($null -ne $msi) {
-          #   $dest = "CC-Switch-$VERSION-Windows$assetSuffix.msi"
-          #   Copy-Item $msi.FullName (Join-Path release-assets $dest)
-          #   Write-Host "Installer copied: $dest"
-          # }
+          $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle/msi') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $msi) {
+            $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+          if ($null -ne $msi) {
+            $dest = "CC-Switch-$VERSION-Windows$assetSuffix.msi"
+            Copy-Item $msi.FullName (Join-Path release-assets $dest)
+            Write-Host "Installer copied: $dest"
+
+            $sigPath = "$($msi.FullName).sig"
+            if (Test-Path $sigPath) {
+              Copy-Item $sigPath (Join-Path release-assets "$dest.sig")
+              Write-Host "Installer signature copied: $dest.sig"
+            } else {
+              Write-Warning "MSI signature not found: $sigPath"
+            }
+          } elseif ($isArm64) {
+            throw 'Windows ARM64 MSI not found'
+          } else {
+            Write-Warning 'Windows MSI not found'
+          }
 
           # 绿色版（portable）：仅可执行文件打 zip（不参与 Updater）
           $exeCandidates = if ($isArm64) {
@@ -605,7 +609,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: CC Switch ${{ github.ref_name }}
-          prerelease: true
+          prerelease: false
           body: |
             ## CC Switch ${{ github.ref_name }}
 
@@ -615,14 +619,12 @@ jobs:
 
             ### 下载
 
-            - **Windows (x86_64)**: `CC-Switch-${{ github.ref_name }}-Windows.exe` or `CC-Switch-${{ github.ref_name }}-Windows-Portable.zip`
+            - **Windows (x86_64)**: `CC-Switch-${{ github.ref_name }}-Windows.msi`, `CC-Switch-${{ github.ref_name }}-Windows.exe`, or `CC-Switch-${{ github.ref_name }}-Windows-Portable.zip`
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # latest.json is only needed for Tauri in-app updates.
   assemble-latest-json:
-    if: ${{ false }}
     name: Assemble latest.json
     runs-on: ubuntu-22.04
     needs: publish-release

@@ -5,6 +5,8 @@ release/
 *.log
 .env
 .env.local
+.tauri-updater-private.key
+.tauri-updater-private.key.pub
 *.tsbuildinfo
 .npmrc
 CLAUDE.md
