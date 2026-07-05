@@ -264,9 +264,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:WINDOWS_RELEASE_ARCH -eq 'arm64') {
-            pnpm tauri build --target aarch64-pc-windows-msvc --bundles msi
+            pnpm tauri build --target aarch64-pc-windows-msvc --bundles nsis
           } else {
-            pnpm tauri build
+            pnpm tauri build --bundles nsis
           }
 
       - name: Build Tauri App (Linux)
@@ -448,26 +448,28 @@ jobs:
           $targetRoot = if ($isArm64) { 'src-tauri/target/aarch64-pc-windows-msvc/release' } else { 'src-tauri/target/release' }
           $assetSuffix = if ($isArm64) { '-arm64' } else { '' }
 
-          $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle/msi') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($null -eq $msi) {
-            $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          $installer = Get-ChildItem -Path (Join-Path $targetRoot 'bundle/nsis') -Recurse -Include *.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $installer) {
+            $installer = Get-ChildItem -Path (Join-Path $targetRoot 'bundle') -Recurse -Include *.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match '[\\/](nsis)[\\/]' } |
+              Select-Object -First 1
           }
-          if ($null -ne $msi) {
-            $dest = "CC-Switch-$VERSION-Windows$assetSuffix.msi"
-            Copy-Item $msi.FullName (Join-Path release-assets $dest)
-            Write-Host "Installer copied: $dest"
+          if ($null -ne $installer) {
+            $dest = "CC-Switch-$VERSION-Windows$assetSuffix-Setup.exe"
+            Copy-Item $installer.FullName (Join-Path release-assets $dest)
+            Write-Host "NSIS installer copied: $dest"
 
-            $sigPath = "$($msi.FullName).sig"
+            $sigPath = "$($installer.FullName).sig"
             if (Test-Path $sigPath) {
               Copy-Item $sigPath (Join-Path release-assets "$dest.sig")
               Write-Host "Installer signature copied: $dest.sig"
             } else {
-              Write-Warning "MSI signature not found: $sigPath"
+              Write-Warning "Installer signature not found: $sigPath"
             }
           } elseif ($isArm64) {
-            throw 'Windows ARM64 MSI not found'
+            throw 'Windows ARM64 NSIS installer not found'
           } else {
-            Write-Warning 'Windows MSI not found'
+            Write-Warning 'Windows NSIS installer not found'
           }
 
           # 绿色版（portable）：仅可执行文件打 zip（不参与 Updater）
@@ -619,7 +621,7 @@ jobs:
 
             ### 下载
 
-            - **Windows (x86_64)**: `CC-Switch-${{ github.ref_name }}-Windows.msi`, `CC-Switch-${{ github.ref_name }}-Windows.exe`, or `CC-Switch-${{ github.ref_name }}-Windows-Portable.zip`
+            - **Windows (x86_64)**: `CC-Switch-${{ github.ref_name }}-Windows-Setup.exe`, `CC-Switch-${{ github.ref_name }}-Windows.exe`, or `CC-Switch-${{ github.ref_name }}-Windows-Portable.zip`
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -670,9 +672,9 @@ jobs:
               *.tar.gz)
                 # 视为 macOS updater artifact
                 mac_url="$url"; mac_sig="$sig_content";;
-              *-Windows-arm64.msi)
+              *-Windows-arm64-Setup.exe)
                 win_arm64_url="$url"; win_arm64_sig="$sig_content";;
-              *-Windows.msi)
+              *-Windows-Setup.exe)
                 win_x64_url="$url"; win_x64_sig="$sig_content";;
               *-Linux-arm64.AppImage|*-Linux-arm64.appimage)
                 linux_arm64_url="$url"; linux_arm64_sig="$sig_content";;
