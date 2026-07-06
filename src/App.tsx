@@ -1592,9 +1592,6 @@ function App() {
         }}
         onSubmit={handleEditProvider}
         appId={activeApp}
-        codexConfigTarget={
-          activeApp === "codex" ? codexConfigTarget : undefined
-        }
         isProxyTakeover={isCurrentAppTakeoverActive}
       />
 

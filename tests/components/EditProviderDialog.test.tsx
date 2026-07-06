@@ -98,7 +98,7 @@ describe("EditProviderDialog", () => {
     apiMocks.getOpenClawLiveProvider.mockReset();
   });
 
-  it("保留 Codex 数据库中的 modelCatalog，避免 live 配置缺字段时清空模型映射", async () => {
+  it("Codex 供应商编辑时使用数据库配置，避免 Windows/WSL live 配置互相遮蔽", async () => {
     const dbModelCatalog = {
       models: [
         {
@@ -128,7 +128,6 @@ describe("EditProviderDialog", () => {
     };
     const handleSubmit = vi.fn().mockResolvedValue(undefined);
 
-    apiMocks.getCurrent.mockResolvedValue(provider.id);
     apiMocks.getLiveProviderSettings.mockResolvedValue(liveSettings);
 
     render(
@@ -144,25 +143,18 @@ describe("EditProviderDialog", () => {
     await waitFor(() => {
       expect(
         JSON.parse(screen.getByTestId("settings-config").textContent ?? "{}"),
-      ).toEqual({
-        ...liveSettings,
-        modelCatalog: dbModelCatalog,
-      });
+      ).toEqual(provider.settingsConfig);
     });
 
-    expect(apiMocks.getCurrent).toHaveBeenCalledWith("codex", undefined);
-    expect(apiMocks.getLiveProviderSettings).toHaveBeenCalledWith(
-      "codex",
-      undefined,
-    );
+    expect(apiMocks.getCurrent).not.toHaveBeenCalled();
+    expect(apiMocks.getLiveProviderSettings).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "common.save" }));
 
     await waitFor(() => expect(handleSubmit).toHaveBeenCalledTimes(1));
-    expect(handleSubmit.mock.calls[0][0].provider.settingsConfig).toEqual({
-      ...liveSettings,
-      modelCatalog: dbModelCatalog,
-    });
+    expect(handleSubmit.mock.calls[0][0].provider.settingsConfig).toEqual(
+      provider.settingsConfig,
+    );
   });
 
   it("代理接管中编辑 Codex 供应商时展示数据库配置而不是读取 live 代理配置", async () => {
@@ -209,7 +201,7 @@ describe("EditProviderDialog", () => {
     ).toEqual(provider.settingsConfig);
   });
 
-  it("Codex WSL 編集時は WSL target で current 判定と live 設定を読む", async () => {
+  it("Codex WSL 編集時も live ではなく共有 DB の設定を表示する", async () => {
     const provider: Provider = {
       id: "deepseek",
       name: "DeepSeek",
@@ -228,7 +220,6 @@ describe("EditProviderDialog", () => {
       config: 'model_provider = "custom"\nmodel = "wsl-live-model"\n',
     };
 
-    apiMocks.getCurrent.mockResolvedValue(provider.id);
     apiMocks.getLiveProviderSettings.mockResolvedValue(liveSettings);
 
     render(
@@ -238,20 +229,16 @@ describe("EditProviderDialog", () => {
         onOpenChange={vi.fn()}
         onSubmit={vi.fn()}
         appId="codex"
-        codexConfigTarget="wsl"
       />,
     );
 
     await waitFor(() => {
       expect(
         JSON.parse(screen.getByTestId("settings-config").textContent ?? "{}"),
-      ).toEqual(liveSettings);
+      ).toEqual(provider.settingsConfig);
     });
 
-    expect(apiMocks.getCurrent).toHaveBeenCalledWith("codex", "wsl");
-    expect(apiMocks.getLiveProviderSettings).toHaveBeenCalledWith(
-      "codex",
-      "wsl",
-    );
+    expect(apiMocks.getCurrent).not.toHaveBeenCalled();
+    expect(apiMocks.getLiveProviderSettings).not.toHaveBeenCalled();
   });
 });
