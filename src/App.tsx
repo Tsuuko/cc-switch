@@ -179,8 +179,9 @@ function App() {
   const queryClient = useQueryClient();
 
   const [activeApp, setActiveApp] = useState<AppId>(getInitialApp);
-  const [codexConfigTarget, setCodexConfigTarget] =
-    useState<CodexConfigTarget>(getInitialCodexConfigTarget);
+  const [codexConfigTarget, setCodexConfigTarget] = useState<CodexConfigTarget>(
+    getInitialCodexConfigTarget,
+  );
   const sharedFeatureApp: AppId =
     activeApp === "claude-desktop" ? "claude" : activeApp;
   const [currentView, setCurrentView] = useState<View>(getInitialView);
@@ -1591,6 +1592,9 @@ function App() {
         }}
         onSubmit={handleEditProvider}
         appId={activeApp}
+        codexConfigTarget={
+          activeApp === "codex" ? codexConfigTarget : undefined
+        }
         isProxyTakeover={isCurrentAppTakeoverActive}
       />
 

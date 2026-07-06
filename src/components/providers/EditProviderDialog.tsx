@@ -8,7 +8,13 @@ import {
   ProviderForm,
   type ProviderFormValues,
 } from "@/components/providers/forms/ProviderForm";
-import { openclawApi, providersApi, vscodeApi, type AppId } from "@/lib/api";
+import {
+  openclawApi,
+  providersApi,
+  vscodeApi,
+  type AppId,
+  type CodexConfigTarget,
+} from "@/lib/api";
 
 interface EditProviderDialogProps {
   open: boolean;
@@ -19,6 +25,7 @@ interface EditProviderDialogProps {
     originalId?: string;
   }) => Promise<void> | void;
   appId: AppId;
+  codexConfigTarget?: CodexConfigTarget;
   isProxyTakeover?: boolean; // 代理接管模式下不读取 live（避免显示被接管后的代理配置）
 }
 
@@ -28,6 +35,7 @@ export function EditProviderDialog({
   onOpenChange,
   onSubmit,
   appId,
+  codexConfigTarget,
   isProxyTakeover = false,
 }: EditProviderDialogProps) {
   const { t } = useTranslation();
@@ -98,11 +106,13 @@ export function EditProviderDialog({
       }
 
       try {
-        const currentId = await providersApi.getCurrent(appId);
+        const target = appId === "codex" ? codexConfigTarget : undefined;
+        const currentId = await providersApi.getCurrent(appId, target);
         if (currentId && provider.id === currentId) {
           try {
             const live = (await vscodeApi.getLiveProviderSettings(
               appId,
+              target,
             )) as Record<string, unknown>;
             if (!cancelled && live && typeof live === "object") {
               setLiveSettings(live);
@@ -129,7 +139,14 @@ export function EditProviderDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, provider?.id, appId, hasLoadedLive, isProxyTakeover]); // 只依赖 provider.id，不依赖整个 provider 对象
+  }, [
+    open,
+    provider?.id,
+    appId,
+    codexConfigTarget,
+    hasLoadedLive,
+    isProxyTakeover,
+  ]); // 只依赖 provider.id，不依赖整个 provider 对象
 
   const initialSettingsConfig = useMemo(() => {
     const base = (liveSettings ?? provider?.settingsConfig ?? {}) as Record<

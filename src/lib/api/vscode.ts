@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { CustomEndpoint } from "@/types";
 import type { AppId } from "./types";
+import type { CodexConfigTarget } from "./providers";
 
 export interface EndpointLatencyResult {
   url: string;
@@ -10,8 +11,14 @@ export interface EndpointLatencyResult {
 }
 
 export const vscodeApi = {
-  async getLiveProviderSettings(appId: AppId) {
-    return await invoke("read_live_provider_settings", { app: appId });
+  async getLiveProviderSettings(
+    appId: AppId,
+    codexConfigTarget?: CodexConfigTarget,
+  ) {
+    return await invoke("read_live_provider_settings", {
+      app: appId,
+      codexConfigTarget,
+    });
   },
 
   async testApiEndpoints(
