@@ -114,8 +114,8 @@ interface CodexFormFieldsProps {
   // Local proxy User-Agent override
   customUserAgent: string;
   onCustomUserAgentChange: (value: string) => void;
-  installationId: string;
-  onInstallationIdChange: (value: string) => void;
+  installationId?: string;
+  onInstallationIdChange?: (value: string) => void;
   localProxyHeadersOverride: string;
   onLocalProxyHeadersOverrideChange: (value: string) => void;
   localProxyBodyOverride: string;
@@ -210,8 +210,8 @@ export function CodexFormFields({
   speedTestEndpoints,
   customUserAgent,
   onCustomUserAgentChange,
-  installationId,
-  onInstallationIdChange,
+  installationId = "",
+  onInstallationIdChange = () => {},
   localProxyHeadersOverride,
   onLocalProxyHeadersOverrideChange,
   localProxyBodyOverride,
@@ -621,43 +621,46 @@ export function CodexFormFields({
         </div>
       )}
 
-      <div className="space-y-2">
-        <FormLabel htmlFor="codexInstallationId">
-          {t("providerForm.installationId", {
-            defaultValue: "installation_id",
-          })}
-        </FormLabel>
-        <div className="flex items-center gap-2">
-          <Input
-            id="codexInstallationId"
-            type="text"
-            value={installationId}
-            onChange={(event) => onInstallationIdChange(event.target.value)}
-            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-            className="font-mono"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="shrink-0"
-            onClick={() => onInstallationIdChange(generateUUID())}
-            title={t("providerForm.generateInstallationId", {
-              defaultValue: "生成 UUID",
+      {appId === "codex" && (
+        <div className="space-y-2">
+          <FormLabel htmlFor="codexInstallationId">
+            {t("providerForm.installationId", {
+              defaultValue: "installation_id",
             })}
-            aria-label={t("providerForm.generateInstallationId", {
-              defaultValue: "生成 UUID",
+          </FormLabel>
+          <div className="flex items-center gap-2">
+            <Input
+              id="codexInstallationId"
+              type="text"
+              value={installationId}
+              onChange={(event) => onInstallationIdChange(event.target.value)}
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              className="font-mono"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => onInstallationIdChange(generateUUID())}
+              title={t("providerForm.generateInstallationId", {
+                defaultValue: "生成 UUID",
+              })}
+              aria-label={t("providerForm.generateInstallationId", {
+                defaultValue: "生成 UUID",
+              })}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("providerForm.installationIdHint", {
+              defaultValue:
+                "切り替え時にこの値で .codex/installation_id を上書きします。",
             })}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {t("providerForm.installationIdHint", {
-            defaultValue: "切り替え時にこの値で .codex/installation_id を上書きします。",
-          })}
-        </p>
-      </div>
+      )}
 
       {/* 高级选项 —— 上游格式/模型映射/思考能力/自定义 UA；预设供应商通常无需展开 */}
       {category !== "official" && (
